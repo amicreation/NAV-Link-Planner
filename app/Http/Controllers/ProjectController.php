@@ -5,17 +5,28 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreProjectRequest;
 use App\Models\Project;
 use App\Models\Site;
+use App\Services\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ProjectController extends Controller
 {
     public function index(): JsonResponse
     {
-        $projects = Project::with(['sites', 'calculation'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $user = Auth::user();
+        $query = Project::with(['sites', 'calculation'])
+            ->orderBy('created_at', 'desc');
+
+        if ($user && $user->isEngineer()) {
+            $query->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhereNull('user_id');
+            });
+        }
+
+        $projects = $query->get();
 
         return response()->json([
             'status' => 'success',
@@ -26,9 +37,11 @@ class ProjectController extends Controller
     public function store(StoreProjectRequest $request): JsonResponse
     {
         $validated = $request->validated();
+        $userId = Auth::id();
 
-        $project = DB::transaction(function () use ($validated) {
+        $project = DB::transaction(function () use ($validated, $userId) {
             $project = Project::create([
+                'user_id' => $userId,
                 'name' => $validated['name'],
                 'customer_name' => $validated['customer_name'],
                 'engineer_name' => $validated['engineer_name'],
@@ -59,6 +72,12 @@ class ProjectController extends Controller
             return $project->load(['sites', 'calculation']);
         });
 
+        $techUpper = strtoupper($project->technology);
+        AuditLogService::log(
+            action: 'PROJECT_CREATED',
+            description: "Created project '{$project->name}' ({$techUpper} link)"
+        );
+
         return response()->json([
             'status' => 'success',
             'message' => 'Project created successfully.',
@@ -76,7 +95,21 @@ class ProjectController extends Controller
 
     public function destroy(Project $project): JsonResponse
     {
+        $user = Auth::user();
+        if ($user && $user->isEngineer() && $project->user_id && $project->user_id !== $user->id) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized. Engineers can only delete their own projects.'
+            ], 403);
+        }
+
+        $projectName = $project->name;
         $project->delete();
+
+        AuditLogService::log(
+            action: 'PROJECT_DELETED',
+            description: "Deleted project '{$projectName}'"
+        );
 
         return response()->json([
             'status' => 'success',

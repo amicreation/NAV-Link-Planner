@@ -1,6 +1,8 @@
 import { createApp } from 'vue';
 import html2canvas from 'html2canvas';
 import Navigation from './components/Navigation.vue';
+import Sidebar from './components/Sidebar.vue';
+import CommandPaletteModal from './components/CommandPaletteModal.vue';
 import Dashboard from './components/Dashboard.vue';
 import NewProjectModal from './components/NewProjectModal.vue';
 import SiteInputForm from './components/SiteInputForm.vue';
@@ -8,10 +10,17 @@ import TechnologyInputs from './components/TechnologyInputs.vue';
 import SiteAttachments from './components/SiteAttachments.vue';
 import ResultsView from './components/ResultsView.vue';
 import ReportsView from './components/ReportsView.vue';
+import LoginView from './components/LoginView.vue';
+import AdminUsersView from './components/AdminUsersView.vue';
+import AuditLogsView from './components/AuditLogsView.vue';
+import EquipmentLibraryView from './components/EquipmentLibraryView.vue';
+import UserProfileModal from './components/UserProfileModal.vue';
 
 const app = createApp({
     components: {
         Navigation,
+        Sidebar,
+        CommandPaletteModal,
         Dashboard,
         NewProjectModal,
         SiteInputForm,
@@ -19,11 +28,20 @@ const app = createApp({
         SiteAttachments,
         ResultsView,
         ReportsView,
+        LoginView,
+        AdminUsersView,
+        AuditLogsView,
+        EquipmentLibraryView,
+        UserProfileModal,
     },
     data() {
         return {
+            currentUser: null,
+            checkingAuth: true,
             currentTab: 'dashboard',
             showNewProjectModal: false,
+            showCommandPaletteModal: false,
+            showProfileModal: false,
             initialTech: 'rf',
             projects: [],
             activeProject: null,
@@ -50,6 +68,8 @@ const app = createApp({
                 required_throughput_mbps: 100
             },
             fsoParams: {
+                fso_calc_mode: 'full_tech',
+                user_custom_remarks: '',
                 wavelength: '1550 nm',
                 required_throughput_mbps: 1000,
                 tx_power_dbm: 24,
@@ -66,9 +86,60 @@ const app = createApp({
         };
     },
     mounted() {
-        this.fetchProjects();
+        this.checkAuth();
+        window.addEventListener('keydown', this.handleGlobalKeydown);
+    },
+    beforeUnmount() {
+        window.removeEventListener('keydown', this.handleGlobalKeydown);
     },
     methods: {
+        async checkAuth() {
+            this.checkingAuth = true;
+            try {
+                const res = await fetch('/api/auth/me');
+                const data = await res.json();
+                if (res.ok && data.status === 'success' && data.user) {
+                    this.currentUser = data.user;
+                    this.fetchProjects();
+                } else {
+                    this.currentUser = null;
+                }
+            } catch (err) {
+                console.warn('Auth check error:', err);
+                this.currentUser = null;
+            } finally {
+                this.checkingAuth = false;
+            }
+        },
+
+        handleLoginSuccess(user) {
+            this.currentUser = user;
+            this.currentTab = 'dashboard';
+            this.fetchProjects();
+        },
+
+        async handleLogout() {
+            try {
+                await fetch('/api/auth/logout', { method: 'POST' });
+            } catch (err) {
+                console.warn('Logout error:', err);
+            } finally {
+                this.currentUser = null;
+                this.projects = [];
+                this.activeProject = null;
+                this.calculationResults = null;
+            }
+        },
+
+        handleGlobalKeydown(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+                e.preventDefault();
+                if (this.currentUser) {
+                    this.showCommandPaletteModal = !this.showCommandPaletteModal;
+                }
+            }
+        },
+
         async fetchProjects() {
             try {
                 const res = await fetch('/api/projects');
@@ -112,7 +183,8 @@ const app = createApp({
                         this.calculationResults = null;
                     }
                 } else {
-                    alert('Failed to delete project.');
+                    const data = await res.json();
+                    alert('Failed to delete project: ' + (data.message || 'Permission denied'));
                 }
             } catch (err) {
                 alert('Error deleting project: ' + err.message);
@@ -159,6 +231,8 @@ const app = createApp({
                     site_b: this.siteB,
                     rf_frequency_ghz: this.rfParams.frequency_ghz,
                     rf_required_throughput_mbps: this.rfParams.required_throughput_mbps,
+                    fso_calc_mode: this.fsoParams.fso_calc_mode,
+                    user_custom_remarks: this.fsoParams.user_custom_remarks,
                     fso_wavelength: this.fsoParams.wavelength,
                     fso_required_throughput_mbps: this.fsoParams.required_throughput_mbps,
                     fso_tx_power_dbm: this.fsoParams.tx_power_dbm,
@@ -224,9 +298,12 @@ const app = createApp({
             }
 
             const chartCanvas = document.getElementById('elevationCanvas');
-            if (chartCanvas) {
+            if (chartCanvas && chartCanvas.height > 0) {
                 try {
-                    chartImageBase64 = chartCanvas.toDataURL('image/png');
+                    const dataUrl = chartCanvas.toDataURL('image/png');
+                    if (dataUrl && dataUrl.length > 500) {
+                        chartImageBase64 = dataUrl;
+                    }
                 } catch (e) {
                     console.warn('Chart canvas export fallback:', e);
                 }
@@ -266,113 +343,197 @@ const app = createApp({
         }
     },
     template: `
-        <div>
-            <Navigation 
-                :currentTab="currentTab" 
-                @change-tab="currentTab = $event" 
-                @open-new-project="showNewProjectModal = true" 
-            />
-
-            <!-- Dashboard View -->
-            <Dashboard 
-                v-if="currentTab === 'dashboard'" 
-                :projects="projects"
-                @open-new-project="showNewProjectModal = true"
-                @change-tab="currentTab = $event"
-                @load-project="loadProject"
-                @quick-tech="handleQuickTech"
-                @delete-project="handleDeleteProject"
-            />
-
-            <!-- Link Workbench View -->
-            <div v-else-if="currentTab === 'planner'" class="container-fluid px-4 py-4">
-                <div class="d-flex align-items-center justify-content-between pb-3 mb-4 border-bottom">
-                    <div>
-                        <span class="badge bg-primary me-2">WGS84 Engine</span>
-                        <h4 class="fw-bold d-inline-block mb-0 brand-blue">Link Engineering Workbench</h4>
-                        <span v-if="activeProject" class="ms-3 badge bg-dark text-white fs-6">
-                            Project: {{ activeProject.name }}
-                        </span>
-                    </div>
-                    <div>
-                        <button 
-                            class="btn btn-primary px-4 fw-bold shadow-sm" 
-                            @click="runCalculation" 
-                            :disabled="calculating"
-                        >
-                            <span v-if="calculating" class="spinner-border spinner-border-sm me-2"></span>
-                            Calculate Link &rarr;
-                        </button>
-                    </div>
+        <div class="d-flex flex-column min-vh-100">
+            <!-- Loading Auth State -->
+            <div v-if="checkingAuth" class="min-vh-100 d-flex align-items-center justify-content-center bg-dark text-white">
+                <div class="text-center">
+                    <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></div>
+                    <div class="fw-bold tracking-wider">NAV LINK PLANNER</div>
+                    <div class="small text-muted">Authenticating Session...</div>
                 </div>
-
-                <!-- Site Input Form -->
-                <SiteInputForm :site-a="siteA" :site-b="siteB" class="mb-3" />
-
-                <!-- Tech Specific Form -->
-                <TechnologyInputs 
-                    v-model:technology="technology"
-                    :rf-params="rfParams"
-                    :fso-params="fsoParams"
-                />
-
-                <!-- Site Photo Attachments Form -->
-                <SiteAttachments 
-                    v-model:attachments="additionalImages"
-                />
-
-                <!-- Action Button -->
-                <div class="d-grid mb-4">
-                    <button 
-                        class="btn btn-primary py-2 fw-bold fs-5 shadow-sm" 
-                        @click="runCalculation" 
-                        :disabled="calculating"
-                    >
-                        <span v-if="calculating" class="spinner-border spinner-border-sm me-2"></span>
-                        Run Engineering Calculations
-                    </button>
-                </div>
-
-                <!-- Results Output Screen -->
-                <ResultsView 
-                    :results="calculationResults" 
-                    :site-a="siteA"
-                    :site-b="siteB"
-                    @export-pdf="exportPdf" 
-                />
             </div>
 
-            <!-- Projects Listing View -->
-            <div v-else-if="currentTab === 'projects'" class="container-fluid px-4 py-4">
-                <div class="d-flex align-items-center justify-content-between pb-3 mb-4 border-bottom">
-                    <h4 class="fw-bold mb-0 brand-blue">Projects Directory</h4>
-                    <button class="btn btn-primary btn-sm fw-semibold" @click="showNewProjectModal = true">
-                        + New Project
-                    </button>
+            <!-- Login View if Not Authenticated -->
+            <LoginView 
+                v-else-if="!currentUser" 
+                @login-success="handleLoginSuccess" 
+            />
+
+            <!-- Main Authenticated Application Layout -->
+            <template v-else>
+                <!-- Top Sticky Navigation Bar -->
+                <Navigation 
+                    :currentTab="currentTab" 
+                    :user="currentUser"
+                    @change-tab="currentTab = $event" 
+                    @open-new-project="showNewProjectModal = true" 
+                    @open-command-palette="showCommandPaletteModal = true"
+                    @open-profile="showProfileModal = true"
+                    @logout="handleLogout"
+                />
+
+                <!-- App Layout: Sidebar + Main Content -->
+                <div class="app-wrapper">
+                    <!-- Collapsible Sidebar -->
+                    <Sidebar 
+                        :currentTab="currentTab"
+                        :activeProject="activeProject"
+                        :user="currentUser"
+                        @change-tab="currentTab = $event"
+                        @open-new-project="showNewProjectModal = true"
+                        @open-command-palette="showCommandPaletteModal = true"
+                    />
+
+                    <!-- Main Application Content View -->
+                    <main class="app-content">
+                        <!-- Dashboard View -->
+                        <Dashboard 
+                            v-if="currentTab === 'dashboard'" 
+                            :projects="projects"
+                            @open-new-project="showNewProjectModal = true"
+                            @change-tab="currentTab = $event"
+                            @load-project="loadProject"
+                            @quick-tech="handleQuickTech"
+                            @delete-project="handleDeleteProject"
+                        />
+
+                        <!-- Link Engineering Workbench Flagship Screen -->
+                        <div v-else-if="currentTab === 'planner'" class="container-fluid px-4 py-4">
+                            <!-- Workbench Top Header Toolbar -->
+                            <div class="card p-3 mb-4 border border-secondary" style="background-color: var(--bg-card-header);">
+                                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span class="badge bg-primary font-monospace">WGS84 ENGINE</span>
+                                            <span v-if="activeProject" class="badge bg-dark border text-white">
+                                                Project: {{ activeProject.name }}
+                                            </span>
+                                        </div>
+                                        <h3 class="page-title text-main mb-0" style="font-size: 1.5rem;">Link Planner</h3>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <button 
+                                            class="btn btn-primary px-4 fw-semibold d-flex align-items-center gap-2 shadow-sm" 
+                                            @click="runCalculation" 
+                                            :disabled="calculating"
+                                        >
+                                            <span v-if="calculating" class="spinner-border spinner-border-sm"></span>
+                                            <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <polygon points="5 3 19 12 5 21 5 3"/>
+                                            </svg>
+                                            Calculate Link Analysis
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Site Inputs Form -->
+                            <SiteInputForm :site-a="siteA" :site-b="siteB" class="mb-4" />
+
+                            <!-- Technology Specific Parameters -->
+                            <TechnologyInputs 
+                                v-model:technology="technology"
+                                :rf-params="rfParams"
+                                :fso-params="fsoParams"
+                                @recalculate="runCalculation"
+                            />
+
+                            <!-- Site Survey Photo Attachments -->
+                            <SiteAttachments 
+                                v-model:attachments="additionalImages"
+                            />
+
+                            <!-- Results Output Screen -->
+                            <ResultsView 
+                                :results="calculationResults" 
+                                :site-a="siteA"
+                                :site-b="siteB"
+                                @export-pdf="exportPdf" 
+                            />
+                        </div>
+
+                        <!-- Floating Calculate Link Analysis Button (Bottom Right) -->
+                        <button 
+                            v-if="currentTab === 'planner'"
+                            @click="runCalculation" 
+                            :disabled="calculating"
+                            class="btn btn-primary btn-lg rounded-pill shadow-lg d-flex align-items-center gap-2 px-4 py-3 fw-bold border-0"
+                            style="position: fixed; bottom: 32px; right: 32px; z-index: 1050; box-shadow: 0 10px 30px -5px rgba(37, 99, 235, 0.65) !important; cursor: pointer;"
+                        >
+                            <span v-if="calculating" class="spinner-border spinner-border-sm" role="status"></span>
+                            <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <polygon points="5 3 19 12 5 21 5 3"/>
+                            </svg>
+                            {{ calculating ? 'Calculating Path...' : 'Calculate Link Analysis' }}
+                        </button>
+
+                        <!-- Projects Directory View -->
+                        <div v-else-if="currentTab === 'projects'" class="container-fluid px-4 py-4">
+                            <div class="pb-3 mb-4 border-bottom border-secondary">
+                                <div>
+                                    <h3 class="page-title text-main mb-1">Projects Directory</h3>
+                                    <p class="text-secondary small mb-0">Browse, filter and manage stored engineering link projects</p>
+                                </div>
+                            </div>
+                            <Dashboard 
+                                :projects="projects"
+                                @open-new-project="showNewProjectModal = true"
+                                @change-tab="currentTab = $event"
+                                @load-project="loadProject"
+                                @quick-tech="handleQuickTech"
+                                @delete-project="handleDeleteProject"
+                            />
+                        </div>
+
+                        <!-- Reports View -->
+                        <ReportsView 
+                            v-else-if="currentTab === 'reports'"
+                            :projects="projects"
+                        />
+
+                        <!-- Equipment Reference Library View -->
+                        <EquipmentLibraryView 
+                            v-else-if="currentTab === 'equipment'"
+                        />
+
+                        <!-- Admin Module: User Management -->
+                        <AdminUsersView 
+                            v-else-if="currentTab === 'admin-users' && currentUser?.role === 'admin'"
+                        />
+
+                        <!-- Admin Module: Audit Trail -->
+                        <AuditLogsView 
+                            v-else-if="currentTab === 'audit-logs' && currentUser?.role === 'admin'"
+                        />
+                    </main>
                 </div>
-                <Dashboard 
+
+                <!-- New Project Modal -->
+                <NewProjectModal 
+                    :show="showNewProjectModal"
+                    :initial-tech="initialTech"
+                    @close="showNewProjectModal = false"
+                    @project-created="handleProjectCreated"
+                />
+
+                <!-- Command Palette Quick Search Modal -->
+                <CommandPaletteModal 
+                    :show="showCommandPaletteModal"
                     :projects="projects"
+                    @close="showCommandPaletteModal = false"
                     @open-new-project="showNewProjectModal = true"
                     @change-tab="currentTab = $event"
                     @load-project="loadProject"
-                    @quick-tech="handleQuickTech"
-                    @delete-project="handleDeleteProject"
                 />
-            </div>
 
-            <!-- Reports View -->
-            <ReportsView 
-                v-else-if="currentTab === 'reports'"
-                :projects="projects"
-            />
-
-            <!-- New Project Modal -->
-            <NewProjectModal 
-                :show="showNewProjectModal"
-                :initial-tech="initialTech"
-                @close="showNewProjectModal = false"
-                @project-created="handleProjectCreated"
-            />
+                <!-- User Profile Modal -->
+                <UserProfileModal 
+                    :show="showProfileModal"
+                    :user="currentUser"
+                    @close="showProfileModal = false"
+                    @user-updated="currentUser = $event"
+                />
+            </template>
         </div>
     `
 });

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -12,6 +13,7 @@ class Project extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'name',
         'customer_name',
         'engineer_name',
@@ -22,6 +24,11 @@ class Project extends Model
     protected $casts = [
         'project_date' => 'date:Y-m-d',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function sites(): HasMany
     {

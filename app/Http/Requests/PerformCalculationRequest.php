@@ -30,8 +30,10 @@ class PerformCalculationRequest extends FormRequest
             'rf_frequency_ghz' => 'required_if:technology,rf|nullable|numeric|min:0.1',
             'rf_required_throughput_mbps' => 'required_if:technology,rf|nullable|numeric|min:1',
             // FSO specific
-            'fso_wavelength' => 'required_if:technology,fso|nullable|string|in:850 nm,1310 nm,1550 nm',
-            'fso_required_throughput_mbps' => 'required_if:technology,fso|nullable|numeric|min:1',
+            'fso_calc_mode' => 'nullable|string|in:full_tech,los_only',
+            'user_custom_remarks' => 'nullable|string',
+            'fso_wavelength' => 'nullable|string',
+            'fso_required_throughput_mbps' => 'nullable|numeric',
             'fso_tx_power_dbm' => 'nullable|numeric',
             'fso_beam_divergence_mrad' => 'nullable|numeric',
             'fso_rx_aperture_m' => 'nullable|numeric',

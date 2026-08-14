@@ -1,20 +1,27 @@
 <template>
-  <div class="card border mb-3">
-    <div class="card-header bg-white py-2 px-3 d-flex align-items-center justify-content-between">
-      <span class="fw-bold text-dark">Technology Specific Engineering Parameters</span>
-      <div class="btn-group btn-group-sm">
+  <div class="card p-4 mb-4 border" style="background-color: var(--bg-card); border-color: var(--border-color) !important;">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h5 class="card-title text-main mb-0 d-flex align-items-center gap-2">
+        <svg class="text-primary" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+        Link Technology & Path Parameters
+      </h5>
+
+      <!-- Segmented Technology Switcher -->
+      <div class="btn-group btn-group-sm" role="group">
         <button 
           type="button" 
-          class="btn" 
+          class="btn py-1 px-3 fw-semibold" 
           :class="technology === 'rf' ? 'btn-primary' : 'btn-outline-secondary'"
           @click="$emit('update:technology', 'rf')"
         >
-          RF Point-to-Point
+          RF Point-to-Point (1 to 80 GHz)
         </button>
         <button 
           type="button" 
-          class="btn" 
-          :class="technology === 'fso' ? 'btn-dark' : 'btn-outline-secondary'"
+          class="btn py-1 px-3 fw-semibold" 
+          :class="technology === 'fso' ? 'btn-primary' : 'btn-outline-secondary'"
           @click="$emit('update:technology', 'fso')"
         >
           Free Space Optical (FSO)
@@ -22,44 +29,79 @@
       </div>
     </div>
 
-    <div class="card-body p-3">
-      <!-- RF Specific Inputs -->
-      <div v-if="technology === 'rf'" class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label fw-semibold small mb-1">Frequency (GHz) <span class="text-danger">*</span></label>
-          <div class="input-group input-group-sm">
-            <input 
-              type="number" 
-              step="0.1" 
-              v-model.number="rfParams.frequency_ghz" 
-              class="form-control" 
-              placeholder="5.8" 
-            />
-            <span class="input-group-text">GHz</span>
-          </div>
-          <div class="form-text small">Common bands: 2.4, 5.8, 11, 18, 24, 60, 80 GHz</div>
-        </div>
+    <!-- RF Specific Inputs -->
+    <div v-if="technology === 'rf'" class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Operating Frequency Band (GHz) <span class="text-danger">*</span></label>
+        <select v-model.number="rfParams.frequency_ghz" class="form-select form-select-sm">
+          <option :value="2.4">2.4 GHz (Sub-6 ISM Band)</option>
+          <option :value="5.8">5.8 GHz (Unlicensed ISM Backhaul)</option>
+          <option :value="11">11 GHz (Licensed Microwave)</option>
+          <option :value="18">18 GHz (Licensed High Capacity)</option>
+          <option :value="24">24 GHz (ISM Millimeter Wave)</option>
+          <option :value="60">60 GHz (V-Band Millimeter Wave)</option>
+          <option :value="80">80 GHz (E-Band Millimeter Wave)</option>
+        </select>
+        <div class="form-text fs-7 text-muted">Select frequency band for 1st Fresnel zone clearance calculation</div>
+      </div>
 
-        <div class="col-md-6">
-          <label class="form-label fw-semibold small mb-1">Required Throughput (Mbps) <span class="text-danger">*</span></label>
-          <div class="input-group input-group-sm">
-            <input 
-              type="number" 
-              v-model.number="rfParams.required_throughput_mbps" 
-              class="form-control" 
-              placeholder="100" 
-            />
-            <span class="input-group-text">Mbps</span>
-          </div>
-          <div class="form-text small">Target throughput for channel width calculation</div>
+      <div class="col-md-6">
+        <label class="form-label">Required Target Throughput (Mbps) <span class="text-danger">*</span></label>
+        <div class="input-group input-group-sm">
+          <input 
+            type="number" 
+            v-model.number="rfParams.required_throughput_mbps" 
+            class="form-control font-monospace" 
+            placeholder="100" 
+          />
+          <span class="input-group-text">Mbps</span>
+        </div>
+        <div class="form-text fs-7 text-muted">Determines recommended RF channel bandwidth clearance (20/40/80 MHz)</div>
+      </div>
+    </div>
+
+    <!-- FSO Specific Inputs -->
+    <div v-else class="row g-3">
+      <!-- FSO Evaluation Mode Selector -->
+      <div class="col-12 mb-2">
+        <label class="form-label fw-bold text-primary mb-2">FSO Calculation Mode <span class="text-danger">*</span></label>
+        <div class="btn-group w-100" role="group">
+          <button 
+            type="button" 
+            class="btn btn-sm py-2 px-3 fw-semibold" 
+            :class="fsoParams.fso_calc_mode === 'full_tech' ? 'btn-primary' : 'btn-outline-secondary'"
+            @click="setFsoMode('full_tech')"
+          >
+            Full Technical Link Budget Analysis
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-sm py-2 px-3 fw-semibold" 
+            :class="fsoParams.fso_calc_mode === 'los_only' ? 'btn-warning text-dark' : 'btn-outline-secondary'"
+            @click="setFsoMode('los_only')"
+          >
+            Line of Sight (LOS) Survey Only
+          </button>
         </div>
       </div>
 
-      <!-- FSO Specific Inputs -->
-      <div v-else class="row g-3">
-        <!-- Row 1: Laser Wavelength & Required Throughput -->
+      <div v-if="fsoParams.fso_calc_mode === 'los_only'" class="col-12">
+        <div class="alert alert-warning py-2 px-3 mb-0 small rounded-3 d-flex align-items-center">
+          <svg class="me-2 flex-shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <div>
+            <strong>LOS Survey Mode Active:</strong> Link budget calculations disabled. Analysis will evaluate direct optical Line of Sight clearance, site elevations, and tower height recommendations.
+          </div>
+        </div>
+      </div>
+
+      <!-- Technical Parameters (Shown only when in Full Tech Mode) -->
+      <template v-if="fsoParams.fso_calc_mode === 'full_tech'">
         <div class="col-md-6">
-          <label class="form-label fw-semibold small mb-1">Laser Wavelength <span class="text-danger">*</span></label>
+          <label class="form-label">Laser Wavelength Band <span class="text-danger">*</span></label>
           <select v-model="fsoParams.wavelength" class="form-select form-select-sm">
             <option value="850 nm">850 nm (Near Infrared)</option>
             <option value="1310 nm">1310 nm (Telecom Optical)</option>
@@ -68,149 +110,145 @@
         </div>
 
         <div class="col-md-6">
-          <label class="form-label fw-semibold small mb-1">Required Throughput (Mbps) <span class="text-danger">*</span></label>
+          <label class="form-label">Required Throughput (Mbps) <span class="text-danger">*</span></label>
           <div class="input-group input-group-sm">
             <input 
               type="number" 
               v-model.number="fsoParams.required_throughput_mbps" 
-              class="form-control" 
+              class="form-control font-monospace" 
               placeholder="1000" 
             />
             <span class="input-group-text">Mbps</span>
           </div>
         </div>
 
-        <!-- Row 2: Tx Optical Power & Beam Divergence -->
         <div class="col-md-6">
-          <label class="form-label fw-semibold small mb-1">Tx Optical Power (dBm) <span class="text-danger">*</span></label>
+          <label class="form-label">Tx Optical Power (dBm) <span class="text-danger">*</span></label>
           <input 
             type="number" 
             step="0.1" 
             v-model.number="fsoParams.tx_power_dbm" 
-            class="form-control form-control-sm" 
+            class="form-control form-control-sm font-monospace" 
             placeholder="24" 
           />
         </div>
 
         <div class="col-md-6">
-          <label class="form-label fw-semibold small mb-1">Beam Divergence (mrad) <span class="text-danger">*</span></label>
+          <label class="form-label">Beam Divergence (mrad) <span class="text-danger">*</span></label>
           <input 
             type="number" 
             step="0.01" 
             v-model.number="fsoParams.beam_divergence_mrad" 
-            class="form-control form-control-sm" 
+            class="form-control form-control-sm font-monospace" 
             placeholder="0.15" 
           />
         </div>
 
-        <!-- Row 3: Receiver Aperture & System Loss -->
         <div class="col-md-6">
-          <label class="form-label fw-semibold small mb-1">Receiver Aperture Diameter (m) <span class="text-danger">*</span></label>
+          <label class="form-label">Receiver Aperture Diameter (m) <span class="text-danger">*</span></label>
           <input 
             type="number" 
             step="0.01" 
             v-model.number="fsoParams.rx_aperture_m" 
-            class="form-control form-control-sm" 
+            class="form-control form-control-sm font-monospace" 
             placeholder="0.9" 
           />
         </div>
 
         <div class="col-md-6">
-          <label class="form-label fw-semibold small mb-1">System / Optical Loss (dB) <span class="text-danger">*</span></label>
+          <label class="form-label">System / Optical Internal Loss (dB) <span class="text-danger">*</span></label>
           <input 
             type="number" 
             step="0.1" 
             v-model.number="fsoParams.system_loss_db" 
-            class="form-control form-control-sm" 
+            class="form-control form-control-sm font-monospace" 
             placeholder="3" 
           />
         </div>
 
-        <!-- Row 4: Receiver Sensitivity & Reference Fade Margin -->
         <div class="col-md-6">
-          <label class="form-label fw-semibold small mb-1">Receiver Sensitivity (dBm) <span class="text-danger">*</span></label>
+          <label class="form-label">Receiver Sensitivity (dBm) <span class="text-danger">*</span></label>
           <input 
             type="number" 
             step="0.1" 
             v-model.number="fsoParams.rx_sensitivity_dbm" 
-            class="form-control form-control-sm" 
+            class="form-control form-control-sm font-monospace" 
             placeholder="-18" 
           />
         </div>
 
         <div class="col-md-6">
-          <label class="form-label fw-semibold small mb-1">Reference Fade Margin (dB @ 1 km) <span class="text-danger">*</span></label>
+          <label class="form-label">Reference Fade Margin (dB @ 1 km) <span class="text-danger">*</span></label>
           <input 
             type="number" 
             step="0.1" 
             v-model.number="fsoParams.ref_fade_margin_db" 
-            class="form-control form-control-sm" 
+            class="form-control form-control-sm font-monospace" 
             placeholder="22" 
           />
         </div>
 
-        <!-- Row 5: City & Visibility Reference Selector -->
         <div class="col-md-6">
           <div class="d-flex align-items-center justify-content-between mb-1">
-            <label class="form-label fw-semibold small mb-0">City Visibility Location Reference</label>
-            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" @click="showVisibilityModal = true">
+            <label class="form-label mb-0">City Visibility Reference</label>
+            <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none fs-7 text-primary" @click="showVisibilityModal = true">
               View Standard Table &rarr;
             </button>
           </div>
           <select v-model="fsoParams.selected_city" class="form-select form-select-sm" @change="onCityChange">
             <option v-for="(data, city) in cityVisibilityData" :key="city" :value="city">
-              {{ city }} (Worst Case: {{ data.worst }} km)
+              {{ city }} (Worst: {{ data.worst }} km)
             </option>
           </select>
         </div>
 
         <div class="col-md-6">
-          <label class="form-label fw-semibold small mb-1">Design Visibility Baseline (km) <span class="text-danger">*</span></label>
+          <label class="form-label">Design Visibility Baseline (km) <span class="text-danger">*</span></label>
           <div class="input-group input-group-sm">
             <input 
               type="number" 
               step="0.1" 
               v-model.number="fsoParams.visibility_km" 
-              class="form-control" 
+              class="form-control font-monospace" 
               placeholder="2.0" 
             />
             <span class="input-group-text">km</span>
           </div>
         </div>
-      </div>
+      </template>
     </div>
 
     <!-- Standard Visibility Reference Modal -->
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(15, 23, 42, 0.6);" v-if="showVisibilityModal">
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(15, 23, 42, 0.65);" v-if="showVisibilityModal" @click.self="showVisibilityModal = false">
       <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg">
-          <div class="modal-header bg-success text-white py-2 px-3">
-            <h6 class="modal-title fw-bold">Standard Visibility Reference (km)</h6>
-            <button type="button" class="btn-close btn-close-white" @click="showVisibilityModal = false"></button>
+        <div class="modal-content border-0 shadow-lg text-main rounded-3" style="background-color: var(--bg-card); border: 1px solid var(--border-color) !important;">
+          <div class="modal-header py-3 px-4" style="border-bottom: 1px solid var(--border-color);">
+            <h6 class="modal-title fw-bold text-main">Standard Indian Cities Visibility Reference (km)</h6>
+            <button type="button" class="btn-close" @click="showVisibilityModal = false"></button>
           </div>
           <div class="modal-body p-0" style="max-height: 480px; overflow-y: auto;">
-            <table class="table table-striped table-hover table-sm align-middle mb-0" style="font-size: 0.85rem;">
-              <thead class="table-success sticky-top">
+            <table class="table table-hover table-sm align-middle mb-0" style="font-size: 0.85rem;">
+              <thead class="sticky-top" style="background-color: var(--bg-card-header);">
                 <tr>
                   <th>City</th>
                   <th class="text-center">Q1</th>
                   <th class="text-center">Q2</th>
                   <th class="text-center">Q3</th>
                   <th class="text-center">Q4</th>
-                  <th class="text-center fw-bold">Worst Case</th>
+                  <th class="text-center fw-bold text-danger">Worst Case</th>
                   <th class="text-end">Select</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="(data, city) in cityVisibilityData" :key="city">
-                  <td class="fw-semibold">{{ city }}</td>
-                  <td class="text-center">{{ data.q1 }}</td>
-                  <td class="text-center">{{ data.q2 }}</td>
-                  <td class="text-center">{{ data.q3 }}</td>
-                  <td class="text-center">{{ data.q4 }}</td>
-                  <td class="text-center fw-bold text-danger">{{ data.worst }}</td>
+                  <td class="fw-semibold text-main">{{ city }}</td>
+                  <td class="text-center text-secondary">{{ data.q1 }}</td>
+                  <td class="text-center text-secondary">{{ data.q2 }}</td>
+                  <td class="text-center text-secondary">{{ data.q3 }}</td>
+                  <td class="text-center text-secondary">{{ data.q4 }}</td>
+                  <td class="text-center fw-bold text-danger font-monospace">{{ data.worst }}</td>
                   <td class="text-end">
-                    <button class="btn btn-xs btn-outline-success py-0 px-2" @click="selectCity(city, data.worst)">
+                    <button class="btn btn-xs btn-outline-primary py-0 px-2" @click="selectCity(city, data.worst)">
                       Use {{ data.worst }} km
                     </button>
                   </td>
@@ -218,7 +256,7 @@
               </tbody>
             </table>
           </div>
-          <div class="modal-footer py-2 px-3">
+          <div class="modal-footer py-2 px-3" style="border-top: 1px solid var(--border-color); background-color: var(--bg-card-header);">
             <button type="button" class="btn btn-secondary btn-sm" @click="showVisibilityModal = false">Close</button>
           </div>
         </div>
@@ -243,7 +281,7 @@ export default {
       required: true
     }
   },
-  emits: ['update:technology'],
+  emits: ['update:technology', 'recalculate'],
   data() {
     return {
       showVisibilityModal: false,
@@ -282,17 +320,29 @@ export default {
     };
   },
   methods: {
+    setFsoMode(mode) {
+      this.fsoParams.fso_calc_mode = mode;
+      this.$emit('recalculate');
+    },
+
     onCityChange() {
       const city = this.fsoParams.selected_city;
       if (this.cityVisibilityData[city]) {
         this.fsoParams.visibility_km = this.cityVisibilityData[city].worst;
       }
     },
-    selectCity(city, worstVis) {
-      this.fsoParams.selected_city = city;
-      this.fsoParams.visibility_km = worstVis;
+
+    selectCity(cityName, worstVal) {
+      this.fsoParams.selected_city = cityName;
+      this.fsoParams.visibility_km = worstVal;
       this.showVisibilityModal = false;
     }
   }
 }
 </script>
+
+<style scoped>
+.fs-7 {
+  font-size: 0.75rem;
+}
+</style>

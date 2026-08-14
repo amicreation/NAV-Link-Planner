@@ -8,14 +8,14 @@
             font-family: Arial, Helvetica, sans-serif;
             font-size: 12px;
             color: #1e293b;
-            line-height: 1.5;
+            line-height: 1.4;
             margin: 0;
             padding: 0;
         }
         .header {
             border-bottom: 2px solid #1e40af;
-            padding-bottom: 12px;
-            margin-bottom: 20px;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
         }
         .brand {
             font-size: 22px;
@@ -25,13 +25,13 @@
             letter-spacing: 1px;
         }
         .subtitle {
-            font-size: 13px;
+            font-size: 12px;
             color: #64748b;
         }
         .badge {
             display: inline-block;
-            padding: 4px 10px;
-            font-size: 11px;
+            padding: 3px 8px;
+            font-size: 10px;
             font-weight: bold;
             border-radius: 4px;
             text-transform: uppercase;
@@ -43,24 +43,24 @@
         .badge-fail { background-color: #fee2e2; color: #991b1b; }
 
         .section-title {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             color: #0f172a;
             border-left: 4px solid #1e40af;
             padding-left: 8px;
-            margin-top: 18px;
-            margin-bottom: 10px;
+            margin-top: 14px;
+            margin-bottom: 8px;
             background-color: #f8fafc;
-            line-height: 24px;
+            line-height: 22px;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
         th, td {
             border: 1px solid #cbd5e1;
-            padding: 7px 10px;
+            padding: 6px 8px;
             text-align: left;
             font-size: 11px;
         }
@@ -72,43 +72,43 @@
         .summary-box {
             border: 1px solid #e2e8f0;
             background-color: #f8fafc;
-            padding: 12px;
+            padding: 10px 12px;
             border-radius: 4px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
         .img-box {
             border: 1px solid #cbd5e1;
             padding: 4px;
             background: #ffffff;
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
         .img-box img {
             max-width: 100%;
             height: auto;
-            max-height: 260px;
+            max-height: 210px;
         }
         .img-caption {
             font-size: 10px;
             color: #475569;
-            margin-top: 4px;
+            margin-top: 3px;
             font-weight: bold;
         }
         .photo-grid {
             width: 100%;
             border: none;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
         .photo-grid td {
             border: none;
-            padding: 6px;
+            padding: 4px;
             vertical-align: top;
             width: 50%;
         }
         .footer {
-            margin-top: 30px;
+            margin-top: 20px;
             border-top: 1px solid #cbd5e1;
-            padding-top: 10px;
+            padding-top: 8px;
             font-size: 10px;
             color: #94a3b8;
             text-align: center;
@@ -120,6 +120,7 @@
 </head>
 <body>
 
+    <!-- PAGE 1: Project & Site Metadata, Link Geometry, Engineering Verdict -->
     <div class="header">
         <table style="border: none; margin: 0;">
             <tr style="border: none;">
@@ -129,7 +130,8 @@
                 </td>
                 <td style="border: none; padding: 0; text-align: right;">
                     <strong>Date:</strong> {{ $project->project_date ? \Carbon\Carbon::parse($project->project_date)->format('Y-m-d') : date('Y-m-d') }}<br>
-                    <strong>Technology:</strong> {{ strtoupper($project->technology) }}
+                    <strong>Technology:</strong> {{ strtoupper($project->technology) }} 
+                    @if(($calc['tech_payload']['fso_calc_mode'] ?? '') === 'los_only') (LOS SURVEY ONLY) @endif
                 </td>
             </tr>
         </table>
@@ -146,8 +148,15 @@
         <tr>
             <th>Field Engineer</th>
             <td>{{ $project->engineer_name }}</td>
-            <th>Technology Mode</th>
-            <td>{{ strtoupper($project->technology) }} Point-to-Point</td>
+            <th>Evaluation Mode</th>
+            <td>
+                {{ strtoupper($project->technology) }} 
+                @if(($calc['tech_payload']['fso_calc_mode'] ?? '') === 'los_only')
+                    - Line of Sight (LOS) Survey Only
+                @else
+                    - Full Technical Analysis
+                @endif
+            </td>
         </tr>
     </table>
 
@@ -236,19 +245,28 @@
 
     <div class="section-title">Engineering Feasibility & Verdict</div>
     <div class="summary-box">
-        <div style="margin-bottom: 8px;">
+        <div style="margin-bottom: 6px;">
             <strong>Overall Status:</strong>
             @php $status = $calc['recommendation_status'] ?? 'Suitable'; @endphp
             <span class="badge {{ $status === 'Suitable' ? 'badge-suitable' : ($status === 'Marginal' ? 'badge-marginal' : 'badge-not-recommended') }}">
                 {{ $status }}
             </span>
         </div>
-        <div>
-            {{ $calc['tech_payload']['engineering_summary'] ?? 'Line-of-Sight is clear and link parameters provide robust operational availability.' }}
+        <div style="margin-bottom: 6px;">
+            <strong>System Remarks:</strong> {{ $calc['tech_payload']['engineering_summary'] ?? 'Line-of-Sight is clear and link parameters provide robust operational availability.' }}
         </div>
+        @if(!empty($calc['tech_payload']['user_custom_remarks']))
+        <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid #cbd5e1;">
+            <strong style="color: #1e40af;">Engineer Custom Remarks & Field Notes:</strong><br>
+            <div style="white-space: pre-wrap; font-style: italic; color: #334155; margin-top: 3px;">{{ $calc['tech_payload']['user_custom_remarks'] }}</div>
+        </div>
+        @endif
     </div>
 
-    <!-- Map Snapshot Section -->
+    <!-- PAGE BREAK: Path Route Map Starts Cleanly at Top of Page 2 -->
+    <div class="page-break"></div>
+
+    <!-- PAGE 2: Path Route Map & Elevation Profile -->
     @if(!empty($calc['map_image']))
     <div class="section-title">Path Route Map (OpenStreetMap)</div>
     <div class="img-box">
@@ -257,7 +275,6 @@
     </div>
     @endif
 
-    <!-- Elevation Profile Chart Section -->
     @if(!empty($calc['chart_image']))
     <div class="section-title">Terrain & Line of Sight Elevation Profile</div>
     <div class="img-box">
@@ -266,9 +283,8 @@
     </div>
     @endif
 
-    <!-- Additional Site Attachments / Photos Section -->
+    <!-- Field Survey Attachments & Site Photos (Rendered on Page 2 if space permits, flowing to Page 3 only if extra photos) -->
     @if(!empty($calc['additional_images']) && is_array($calc['additional_images']) && count($calc['additional_images']) > 0)
-    <div class="page-break"></div>
     <div class="section-title">Field Survey Attachments & Site Photos</div>
     <table class="photo-grid">
         @foreach(array_chunk($calc['additional_images'], 2) as $row)
@@ -276,7 +292,7 @@
             @foreach($row as $photo)
             <td>
                 <div class="img-box">
-                    <img src="{{ $photo['image'] ?? $photo['url'] ?? '' }}" alt="Site Photo" style="max-height: 200px;" />
+                    <img src="{{ $photo['image'] ?? $photo['url'] ?? '' }}" alt="Site Photo" style="max-height: 160px;" />
                     <div class="img-caption">{{ $photo['caption'] ?? 'Field Photo' }}</div>
                 </div>
             </td>
@@ -290,7 +306,7 @@
     @endif
 
     <div class="footer">
-        Generated by NAV LINK PLANNER &bull; Vendor-Independent Field Engineering System
+        Generated by NAV LINK PLANNER &bull; Report Generated by: {{ auth()->user()?->name ?? $project->engineer_name ?? 'Amit Sharma' }}
     </div>
 
 </body>

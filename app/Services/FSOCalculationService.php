@@ -87,7 +87,7 @@ class FSOCalculationService
     }
 
     /**
-     * Complete FSO Optical Link Budget Evaluation using exact user input parameters.
+     * Complete FSO Optical Link Evaluation supporting Full Technical and LOS Survey modes.
      */
     public function evaluateLink(
         float $distanceKm,
@@ -97,6 +97,31 @@ class FSOCalculationService
         bool $terrainPass,
         array $fsoInputs = []
     ): array {
+        $fsoCalcMode = $fsoInputs['fso_calc_mode'] ?? 'full_tech';
+        $userCustomRemarks = $fsoInputs['user_custom_remarks'] ?? '';
+
+        // Mode 2: LOS Survey Verification Only (Without technical parameters)
+        if ($fsoCalcMode === 'los_only') {
+            $status = ($losPass && $terrainPass) ? 'Suitable' : 'Not Recommended';
+            
+            if ($losPass && $terrainPass) {
+                $losRecommendation = "Line-of-Sight direct optical ray clearance verified between Site A and Site B over {$distanceKm} km span.";
+                $engineeringSummary = "LOS Field Survey Passed: Unobstructed direct optical ray path between Site A and Site B. Antenna tower heights are adequate for direct line of sight.";
+            } else {
+                $losRecommendation = "Line-of-Sight obstructed by intermediate terrain or elevation obstacles. Recommend increasing antenna tower heights at Site A or Site B.";
+                $engineeringSummary = "LOS Survey Warning: Direct optical ray path experiences terrain obstruction. Tower height adjustment required.";
+            }
+
+            return [
+                'fso_calc_mode' => 'los_only',
+                'status' => $status,
+                'user_custom_remarks' => $userCustomRemarks,
+                'atmospheric_recommendation' => $losRecommendation,
+                'engineering_summary' => $engineeringSummary,
+            ];
+        }
+
+        // Mode 1: Full Technical Link Budget Analysis
         $txPowerDbm = (float) ($fsoInputs['tx_power_dbm'] ?? 24.0);
         $divergenceMrad = (float) ($fsoInputs['beam_divergence_mrad'] ?? 0.15);
         $rxApertureM = (float) ($fsoInputs['rx_aperture_m'] ?? 0.9);
@@ -148,7 +173,9 @@ class FSOCalculationService
         }
 
         return [
+            'fso_calc_mode' => 'full_tech',
             'status' => $status,
+            'user_custom_remarks' => $userCustomRemarks,
             'tx_power_dbm' => $txPowerDbm,
             'beam_divergence_mrad' => $divergenceMrad,
             'rx_aperture_m' => $rxApertureM,

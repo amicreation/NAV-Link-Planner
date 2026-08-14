@@ -103,6 +103,8 @@ class EngineeringCalculationService
             $reqThroughput = (float) ($inputs['fso_required_throughput_mbps'] ?? 1000.0);
             
             $fsoInputs = [
+                'fso_calc_mode' => $inputs['fso_calc_mode'] ?? 'full_tech',
+                'user_custom_remarks' => $inputs['user_custom_remarks'] ?? '',
                 'tx_power_dbm' => $inputs['fso_tx_power_dbm'] ?? 24,
                 'beam_divergence_mrad' => $inputs['fso_beam_divergence_mrad'] ?? 0.15,
                 'rx_aperture_m' => $inputs['fso_rx_aperture_m'] ?? 0.9,
@@ -124,6 +126,8 @@ class EngineeringCalculationService
 
             $payload = array_merge([
                 'technology' => 'fso',
+                'fso_calc_mode' => $inputs['fso_calc_mode'] ?? 'full_tech',
+                'user_custom_remarks' => $inputs['user_custom_remarks'] ?? '',
                 'required_throughput_mbps' => $reqThroughput,
                 'engineering_recommendation' => $techEvaluation['status'],
             ], $techEvaluation);
