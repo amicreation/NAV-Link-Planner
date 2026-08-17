@@ -62,8 +62,8 @@
 
     <!-- FSO Specific Inputs -->
     <div v-else class="row g-3">
-      <!-- FSO Evaluation Mode Selector -->
-      <div class="col-12 mb-2">
+      <!-- FSO Evaluation Mode Selector (Shown ONLY for Technical & Admin Role Profiles) -->
+      <div v-if="hasTechnicalAccess" class="col-12 mb-2">
         <label class="form-label fw-bold text-primary mb-2">FSO Calculation Mode <span class="text-danger">*</span></label>
         <div class="btn-group w-100" role="group">
           <button 
@@ -85,7 +85,21 @@
         </div>
       </div>
 
-      <div v-if="fsoParams.fso_calc_mode === 'los_only'" class="col-12">
+      <!-- Engineering Mode Notice (For Standard Engineer Role) -->
+      <div v-else class="col-12 mb-2">
+        <div class="alert alert-info py-2 px-3 mb-0 small rounded-3 d-flex align-items-center">
+          <svg class="me-2 flex-shrink-0 text-primary" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <div>
+            <strong>Engineering Profile Mode:</strong> FSO link analysis is configured for direct Line of Sight (LOS) Survey. Full Technical optical link budget calculations are available in Technical and Admin role profiles.
+          </div>
+        </div>
+      </div>
+
+      <div v-if="!hasTechnicalAccess || fsoParams.fso_calc_mode === 'los_only'" class="col-12">
         <div class="alert alert-warning py-2 px-3 mb-0 small rounded-3 d-flex align-items-center">
           <svg class="me-2 flex-shrink-0" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
@@ -98,8 +112,8 @@
         </div>
       </div>
 
-      <!-- Technical Parameters (Shown only when in Full Tech Mode) -->
-      <template v-if="fsoParams.fso_calc_mode === 'full_tech'">
+      <!-- Technical Parameters (Shown ONLY in Full Technical Mode for Technical & Admin Roles) -->
+      <template v-if="hasTechnicalAccess && fsoParams.fso_calc_mode === 'full_tech'">
         <div class="col-md-6">
           <label class="form-label">Laser Wavelength Band <span class="text-danger">*</span></label>
           <select v-model="fsoParams.wavelength" class="form-select form-select-sm">
@@ -279,6 +293,15 @@ export default {
     fsoParams: {
       type: Object,
       required: true
+    },
+    userRole: {
+      type: String,
+      default: 'engineer'
+    }
+  },
+  computed: {
+    hasTechnicalAccess() {
+      return ['admin', 'technical'].includes(this.userRole);
     }
   },
   emits: ['update:technology', 'recalculate'],

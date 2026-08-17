@@ -22,8 +22,8 @@
             <div>
               <div class="fw-bold fs-5 text-main">{{ user?.name }}</div>
               <div class="text-secondary small font-monospace">{{ user?.email }}</div>
-              <span class="badge bg-primary-subtle text-primary border border-primary-subtle text-uppercase mt-1">
-                {{ user?.role }}
+              <span class="badge text-uppercase mt-1" :class="user?.role === 'admin' ? 'badge-role-admin' : (user?.role === 'technical' ? 'badge-role-technical' : 'badge-role-engineer')">
+                {{ user?.role === 'admin' ? 'FULL ADMIN' : (user?.role === 'technical' ? 'FULL TECHNICAL' : 'ENGINEERING') }}
               </span>
             </div>
           </div>

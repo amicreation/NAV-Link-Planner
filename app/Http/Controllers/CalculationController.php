@@ -17,6 +17,13 @@ class CalculationController extends Controller
     public function calculate(PerformCalculationRequest $request): JsonResponse
     {
         $validated = $request->validated();
+
+        // Enforce system role permission: Engineer role is restricted to FSO LOS Survey mode
+        $user = auth()->user();
+        if ($user && $user->role === 'engineer' && ($validated['technology'] ?? '') === 'fso') {
+            $validated['fso_calc_mode'] = 'los_only';
+        }
+
         $result = $this->calculationService->runCalculation($validated);
 
         // Store calculation record if linked to a project

@@ -83,8 +83,8 @@
               {{ user.name.charAt(0).toUpperCase() }}
             </div>
             <span class="d-none d-md-inline small fw-semibold text-main">{{ user.name }}</span>
-            <span class="badge text-uppercase ms-1" :class="user.role === 'admin' ? 'bg-danger-subtle text-danger' : 'bg-primary-subtle text-primary'">
-              {{ user.role }}
+            <span class="badge text-uppercase ms-1" :class="user.role === 'admin' ? 'badge-role-admin' : (user.role === 'technical' ? 'badge-role-technical' : 'badge-role-engineer')">
+              {{ user.role === 'admin' ? 'FULL ADMIN' : (user.role === 'technical' ? 'FULL TECHNICAL' : 'ENGINEERING') }}
             </span>
           </button>
 

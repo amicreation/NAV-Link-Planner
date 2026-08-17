@@ -100,6 +100,9 @@ const app = createApp({
                 const data = await res.json();
                 if (res.ok && data.status === 'success' && data.user) {
                     this.currentUser = data.user;
+                    if (this.currentUser.role === 'engineer') {
+                        this.fsoParams.fso_calc_mode = 'los_only';
+                    }
                     this.fetchProjects();
                 } else {
                     this.currentUser = null;
@@ -114,6 +117,9 @@ const app = createApp({
 
         handleLoginSuccess(user) {
             this.currentUser = user;
+            if (this.currentUser.role === 'engineer') {
+                this.fsoParams.fso_calc_mode = 'los_only';
+            }
             this.currentTab = 'dashboard';
             this.fetchProjects();
         },
@@ -435,6 +441,7 @@ const app = createApp({
                                 v-model:technology="technology"
                                 :rf-params="rfParams"
                                 :fso-params="fsoParams"
+                                :user-role="currentUser?.role"
                                 @recalculate="runCalculation"
                             />
 

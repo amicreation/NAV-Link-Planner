@@ -69,7 +69,7 @@ class AdminUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', 'min:8'],
-            'role' => ['required', Rule::in(['admin', 'engineer'])],
+            'role' => ['required', Rule::in(['admin', 'technical', 'engineer'])],
             'mobile_number' => ['nullable', 'string', 'max:50'],
             'company' => ['nullable', 'string', 'max:255'],
             'designation' => ['nullable', 'string', 'max:255'],
@@ -117,7 +117,7 @@ class AdminUserController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'role' => ['required', Rule::in(['admin', 'engineer'])],
+            'role' => ['required', Rule::in(['admin', 'technical', 'engineer'])],
             'mobile_number' => ['nullable', 'string', 'max:50'],
             'company' => ['nullable', 'string', 'max:255'],
             'designation' => ['nullable', 'string', 'max:255'],

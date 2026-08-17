@@ -45,10 +45,11 @@
             style="width: 220px;"
             @input="fetchUsers"
           />
-          <select v-model="roleFilter" class="form-select form-select-sm" style="width: 140px;" @change="fetchUsers">
+          <select v-model="roleFilter" class="form-select form-select-sm" style="width: 150px;" @change="fetchUsers">
             <option value="all">All Roles</option>
-            <option value="admin">Admin Only</option>
-            <option value="engineer">Engineer Only</option>
+            <option value="admin">Full Admin</option>
+            <option value="technical">Full Technical</option>
+            <option value="engineer">Engineering</option>
           </select>
           <select v-model="statusFilter" class="form-select form-select-sm" style="width: 140px;" @change="fetchUsers">
             <option value="all">All Status</option>
@@ -96,8 +97,8 @@
                   </div>
                 </td>
                 <td>
-                  <span class="badge text-uppercase" :class="user.role === 'admin' ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-primary-subtle text-primary border border-primary-subtle'">
-                    {{ user.role }}
+                  <span class="badge text-uppercase" :class="user.role === 'admin' ? 'badge-role-admin' : (user.role === 'technical' ? 'badge-role-technical' : 'badge-role-engineer')">
+                    {{ user.role === 'admin' ? 'FULL ADMIN' : (user.role === 'technical' ? 'FULL TECHNICAL' : 'ENGINEERING') }}
                   </span>
                 </td>
                 <td>
@@ -166,8 +167,9 @@
                 <div class="col-md-6">
                   <label class="form-label">System Role <span class="text-danger">*</span></label>
                   <select v-model="userForm.role" class="form-select">
-                    <option value="engineer">Engineer (Standard User)</option>
-                    <option value="admin">Administrator (Full Access)</option>
+                    <option value="engineer">Engineering (Standard Role)</option>
+                    <option value="technical">Full Technical (FSO Optical Budget & Link Analysis)</option>
+                    <option value="admin">Full Admin (System Administrator Access)</option>
                   </select>
                 </div>
 

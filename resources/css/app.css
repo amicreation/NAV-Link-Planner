@@ -318,6 +318,53 @@ body[data-theme="dark"] .badge-tech-fso {
     color: #C084FC;
 }
 
+/* System Role Badge Utilities */
+.bg-purple-subtle {
+    background-color: rgba(147, 51, 234, 0.15) !important;
+}
+
+.text-purple {
+    color: #9333EA !important;
+}
+
+body[data-theme="dark"] .text-purple {
+    color: #C084FC !important;
+}
+
+.border-purple-subtle {
+    border-color: rgba(147, 51, 234, 0.3) !important;
+}
+
+.badge-role-admin {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+    color: #DC2626 !important;
+    border: 1px solid rgba(239, 68, 68, 0.3) !important;
+}
+
+body[data-theme="dark"] .badge-role-admin {
+    color: #F87171 !important;
+}
+
+.badge-role-technical {
+    background-color: rgba(147, 51, 234, 0.15) !important;
+    color: #9333EA !important;
+    border: 1px solid rgba(147, 51, 234, 0.3) !important;
+}
+
+body[data-theme="dark"] .badge-role-technical {
+    color: #C084FC !important;
+}
+
+.badge-role-engineer {
+    background-color: rgba(37, 99, 235, 0.15) !important;
+    color: #2563EB !important;
+    border: 1px solid rgba(37, 99, 235, 0.3) !important;
+}
+
+body[data-theme="dark"] .badge-role-engineer {
+    color: #60A5FA !important;
+}
+
 /* Map Container Styling */
 .map-container {
     height: 440px;

@@ -60,6 +60,16 @@ class User extends Authenticatable
         return $this->role === 'engineer';
     }
 
+    public function isTechnical(): bool
+    {
+        return $this->role === 'technical';
+    }
+
+    public function hasTechnicalAccess(): bool
+    {
+        return in_array($this->role, ['admin', 'technical']);
+    }
+
     public function isActive(): bool
     {
         return $this->status === 'active';

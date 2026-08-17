@@ -32,7 +32,24 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 2. Seed Field Engineer
+        // 2. Seed Full Technical Specialist
+        $technical = User::firstOrCreate(
+            ['email' => 'tech@navlinkplanner.com'],
+            [
+                'name' => 'Technical Specialist Alex',
+                'password' => Hash::make('password123'),
+                'role' => 'technical',
+                'mobile_number' => '+91 9876543211',
+                'company' => 'Optical & Wireless Systems',
+                'designation' => 'Lead FSO/RF Link Engineer',
+                'department' => 'Optical Communications R&D',
+                'status' => 'active',
+                'created_by_id' => $admin->id,
+                'last_login_at' => now(),
+            ]
+        );
+
+        // 3. Seed Field Engineer
         $engineer = User::firstOrCreate(
             ['email' => 'engineer@navlinkplanner.com'],
             [

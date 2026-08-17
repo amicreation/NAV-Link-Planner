@@ -20,6 +20,32 @@
 
 ---
 
+## Daily Log: 2026-08-17
+
+### Timestamp: 2026-08-17 12:41:00 IST
+
+#### Completed Engineering Milestones
+
+1. **Three System Role Profiles Architecture Implementation**:
+   - Configured system role profile tiering across backend and Vue 3 frontend:
+     - **Full Admin (`admin`)**: Access to User Management, Audit Logs, RF & FSO Link Engineering Workbench, full FSO Technical calculations, Equipment Library, and Reports.
+     - **Full Technical (`technical`)**: Access to FSO Full Technical Link Budget Analysis (optical parameters, wavelength, divergence, receiver aperture, sensitivity, fade margin, Kruse attenuation), RF Workbench, Equipment Library, and Reports.
+     - **Engineering (`engineer`)**: Standard engineer profile. Access to RF Workbench, Reports, Equipment Library, and FSO Line of Sight (LOS) Survey Mode.
+   - Restricted **FSO Technical Calculation Mode** in `TechnologyInputs.vue` so it is hidden in `engineer` mode and displayed exclusively in `technical` and `admin` modes.
+   - Backend enforcement added in `CalculationController.php` forcing `fso_calc_mode` to `los_only` whenever an engineer user executes FSO calculations.
+
+2. **UI & User Management Updates**:
+   - Added `technical` role validation to `AdminUserController.php` (`store` and `update`).
+   - Updated `AdminUsersView.vue`, `Navigation.vue`, and `UserProfileModal.vue` with dedicated role badges (`FULL ADMIN`, `FULL TECHNICAL`, `ENGINEERING`).
+   - Added styled CSS badge utility classes (`.badge-role-admin`, `.badge-role-technical`, `.badge-role-engineer`, `.bg-purple-subtle`, `.text-purple`, `.border-purple-subtle`) in `app.css`.
+   - Seeded default Full Technical user (`tech@navlinkplanner.com` / `password123`) in `DatabaseSeeder.php`.
+
+3. **Empirical Verification**:
+   - `php artisan test`: 8/8 tests passed.
+   - `npm run build`: Compiled assets successfully.
+
+---
+
 ## Daily Log: 2026-08-14
 
 ### Timestamp: 2026-08-14 12:14:00 IST
