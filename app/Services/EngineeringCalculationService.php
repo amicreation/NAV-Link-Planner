@@ -97,6 +97,7 @@ class EngineeringCalculationService
                 'engineering_recommendation' => $techEvaluation['status'],
                 'engineering_summary' => $techEvaluation['summary'],
                 'max_practical_distance_km' => $techEvaluation['max_practical_distance_km'],
+                'user_custom_remarks' => $inputs['user_custom_remarks'] ?? '',
             ];
         } else {
             $wavelength = $inputs['fso_wavelength'] ?? '1550 nm';
@@ -153,6 +154,7 @@ class EngineeringCalculationService
             'effective_elev_b' => $profileResult['effective_elev_b'],
             'map_image' => $mapPngImage,
             'chart_image' => $chartPngImage,
+            'user_custom_remarks' => $inputs['user_custom_remarks'] ?? '',
             'tech_payload' => $payload,
             'profile_points' => $profileResult['profile_points'],
         ];

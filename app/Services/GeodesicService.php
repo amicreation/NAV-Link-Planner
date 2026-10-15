@@ -84,4 +84,127 @@ class GeodesicService
         }
         return ($xMeters * ($totalDistanceMeters - $xMeters)) / (2.0 * self::EFFECTIVE_EARTH_RADIUS);
     }
+
+    /**
+     * Converts Decimal Degrees to DMS formatted string (e.g. 12° 58' 17.76" N).
+     */
+    public static function toDms(float $decimal, bool $isLongitude = false): string
+    {
+        $split = self::splitDms($decimal, $isLongitude);
+        return $split['formatted'];
+    }
+
+    /**
+     * Alias for toDms().
+     */
+    public static function decimalToDms(float $decimal, bool $isLongitude = false): string
+    {
+        return self::toDms($decimal, $isLongitude);
+    }
+
+    /**
+     * Splits Decimal Degrees into structured DMS components.
+     *
+     * @return array{degrees: int, minutes: int, seconds: float, direction: string, formatted: string}
+     */
+    public static function splitDms(float $decimal, bool $isLongitude = false): array
+    {
+        $direction = $isLongitude ? ($decimal >= 0 ? 'E' : 'W') : ($decimal >= 0 ? 'N' : 'S');
+        $abs = abs($decimal);
+        $deg = (int) floor($abs);
+        $minFloat = ($abs - $deg) * 60.0;
+        $min = (int) floor($minFloat);
+        $sec = round(($minFloat - $min) * 60.0, 2);
+
+        if ($sec >= 60.0) {
+            $sec = 0.0;
+            $min++;
+            if ($min >= 60) {
+                $min = 0;
+                $deg++;
+            }
+        }
+
+        $formatted = sprintf('%d° %02d\' %05.2f" %s', $deg, $min, $sec, $direction);
+
+        return [
+            'degrees' => $deg,
+            'minutes' => $min,
+            'seconds' => $sec,
+            'direction' => $direction,
+            'formatted' => $formatted,
+        ];
+    }
+
+    /**
+     * Converts a DMS string, array, or numeric value to Decimal Degrees.
+     */
+    public static function dmsToDecimal(mixed $input, bool $isLongitude = false): ?float
+    {
+        if ($input === null || $input === '') {
+            return null;
+        }
+
+        if (is_numeric($input)) {
+            $num = (float) $input;
+            $isOutOfRange = $isLongitude ? (abs($num) > 180.0) : (abs($num) > 90.0);
+            if ($isOutOfRange) {
+                $absStr = (string) abs($num);
+                $numParts = explode('.', $absStr);
+                $intPart = $numParts[0];
+                $decPart = $numParts[1] ?? '';
+                $len = strlen($intPart);
+                if ($len >= 5 && $len <= 7) {
+                    $degLen = $len - 4;
+                    $deg = (float) substr($intPart, 0, $degLen);
+                    $min = (float) substr($intPart, $degLen, 2);
+                    $sec = (float) (substr($intPart, $degLen + 2) . ($decPart !== '' ? '.' . $decPart : ''));
+                    if ($min < 60 && $sec < 60 && (($isLongitude && $deg <= 180) || (!$isLongitude && $deg <= 90))) {
+                        $val = $deg + ($min / 60.0) + ($sec / 3600.0);
+                        return $num < 0 ? -$val : $val;
+                    }
+                }
+            }
+            return $num;
+        }
+
+        if (is_array($input)) {
+            $deg = (float) ($input['degrees'] ?? 0);
+            $min = (float) ($input['minutes'] ?? 0);
+            $sec = (float) ($input['seconds'] ?? 0);
+            $dir = strtoupper(trim((string) ($input['direction'] ?? '')));
+
+            $val = abs($deg) + ($min / 60.0) + ($sec / 3600.0);
+            if ($dir === 'S' || $dir === 'W' || $deg < 0) {
+                $val = -$val;
+            }
+            return $val;
+        }
+
+        $str = trim((string) $input);
+        if (is_numeric($str)) {
+            return (float) $str;
+        }
+
+        // Check for negative indicator or South / West
+        $isNegative = false;
+        if (preg_match('/[SWsw]/', $str) || str_starts_with($str, '-')) {
+            $isNegative = true;
+        }
+
+        // Normalize delimiters (°, ', ", d, m, s, :, commas, etc.) to spaces
+        $normalized = preg_replace('/[°\'"”’dmsDMSNSEWnsew:\,\-]+/', ' ', $str);
+        $parts = preg_split('/\s+/', trim($normalized));
+
+        if (count($parts) >= 1 && is_numeric($parts[0])) {
+            $deg = (float) $parts[0];
+            $min = isset($parts[1]) && is_numeric($parts[1]) ? (float) $parts[1] : 0.0;
+            $sec = isset($parts[2]) && is_numeric($parts[2]) ? (float) $parts[2] : 0.0;
+
+            $val = abs($deg) + ($min / 60.0) + ($sec / 3600.0);
+            return $isNegative ? -$val : $val;
+        }
+
+        return null;
+    }
 }

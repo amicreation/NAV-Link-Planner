@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Services\GeodesicService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreProjectRequest extends FormRequest
@@ -9,6 +10,32 @@ class StoreProjectRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $siteA = $this->input('site_a');
+        $siteB = $this->input('site_b');
+
+        if (is_array($siteA)) {
+            if (isset($siteA['latitude'])) {
+                $siteA['latitude'] = GeodesicService::dmsToDecimal($siteA['latitude'], false);
+            }
+            if (isset($siteA['longitude'])) {
+                $siteA['longitude'] = GeodesicService::dmsToDecimal($siteA['longitude'], true);
+            }
+            $this->merge(['site_a' => $siteA]);
+        }
+
+        if (is_array($siteB)) {
+            if (isset($siteB['latitude'])) {
+                $siteB['latitude'] = GeodesicService::dmsToDecimal($siteB['latitude'], false);
+            }
+            if (isset($siteB['longitude'])) {
+                $siteB['longitude'] = GeodesicService::dmsToDecimal($siteB['longitude'], true);
+            }
+            $this->merge(['site_b' => $siteB]);
+        }
     }
 
     public function rules(): array

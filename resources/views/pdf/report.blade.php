@@ -172,13 +172,25 @@
         <tbody>
             <tr>
                 <td><strong>Latitude</strong></td>
-                <td>{{ number_format((float) ($siteA?->latitude ?? 0), 8) }}°</td>
-                <td>{{ number_format((float) ($siteB?->latitude ?? 0), 8) }}°</td>
+                <td>
+                    {{ number_format((float) ($siteA?->latitude ?? 0), 8) }}°
+                    <div style="font-size: 9px; color: #64748b; font-family: monospace;">{{ \App\Services\GeodesicService::toDms((float) ($siteA?->latitude ?? 0), false) }}</div>
+                </td>
+                <td>
+                    {{ number_format((float) ($siteB?->latitude ?? 0), 8) }}°
+                    <div style="font-size: 9px; color: #64748b; font-family: monospace;">{{ \App\Services\GeodesicService::toDms((float) ($siteB?->latitude ?? 0), false) }}</div>
+                </td>
             </tr>
             <tr>
                 <td><strong>Longitude</strong></td>
-                <td>{{ number_format((float) ($siteA?->longitude ?? 0), 8) }}°</td>
-                <td>{{ number_format((float) ($siteB?->longitude ?? 0), 8) }}°</td>
+                <td>
+                    {{ number_format((float) ($siteA?->longitude ?? 0), 8) }}°
+                    <div style="font-size: 9px; color: #64748b; font-family: monospace;">{{ \App\Services\GeodesicService::toDms((float) ($siteA?->longitude ?? 0), true) }}</div>
+                </td>
+                <td>
+                    {{ number_format((float) ($siteB?->longitude ?? 0), 8) }}°
+                    <div style="font-size: 9px; color: #64748b; font-family: monospace;">{{ \App\Services\GeodesicService::toDms((float) ($siteB?->longitude ?? 0), true) }}</div>
+                </td>
             </tr>
             <tr>
                 <td><strong>Tower Height</strong></td>
@@ -255,10 +267,13 @@
         <div style="margin-bottom: 6px;">
             <strong>System Remarks:</strong> {{ $calc['tech_payload']['engineering_summary'] ?? 'Line-of-Sight is clear and link parameters provide robust operational availability.' }}
         </div>
-        @if(!empty($calc['tech_payload']['user_custom_remarks']))
+        @php
+            $userCustomNotes = $calc['tech_payload']['user_custom_remarks'] ?? $calc['user_custom_remarks'] ?? '';
+        @endphp
+        @if(!empty(trim((string) $userCustomNotes)))
         <div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid #cbd5e1;">
             <strong style="color: #1e40af;">Engineer Custom Remarks & Field Notes:</strong><br>
-            <div style="white-space: pre-wrap; font-style: italic; color: #334155; margin-top: 3px;">{{ $calc['tech_payload']['user_custom_remarks'] }}</div>
+            <div style="white-space: pre-wrap; font-style: italic; color: #334155; margin-top: 3px;">{{ $userCustomNotes }}</div>
         </div>
         @endif
     </div>

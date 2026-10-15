@@ -61,6 +61,27 @@ class ReportController extends Controller
             $calculationData['additional_images'] = $request->input('additional_images');
         }
 
+        // Merge request-provided custom engineer survey remarks
+        if ($request->has('user_custom_remarks')) {
+            $userRemarks = (string) $request->input('user_custom_remarks');
+            $calculationData['user_custom_remarks'] = $userRemarks;
+            if (!isset($calculationData['tech_payload'])) {
+                $calculationData['tech_payload'] = [];
+            }
+            $calculationData['tech_payload']['user_custom_remarks'] = $userRemarks;
+
+            if ($calc && isset($calc->results_payload)) {
+                $storedPayload = $calc->results_payload;
+                $storedPayload['user_custom_remarks'] = $userRemarks;
+                if (!isset($storedPayload['tech_payload'])) {
+                    $storedPayload['tech_payload'] = [];
+                }
+                $storedPayload['tech_payload']['user_custom_remarks'] = $userRemarks;
+                $calc->results_payload = $storedPayload;
+                $calc->save();
+            }
+        }
+
         $pdf = Pdf::loadView('pdf.report', [
             'project' => $project,
             'siteA' => $siteA,

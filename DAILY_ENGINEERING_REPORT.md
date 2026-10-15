@@ -20,6 +20,53 @@
 
 ---
 
+## Daily Log: 2026-10-15
+
+### Timestamp: 2026-10-15 18:28:50 IST
+
+#### Completed Engineering Milestones
+
+1. **Dual Geodetic Coordinate Format Support (Decimal Degrees & DMS)**:
+   - Implemented bidirectional conversion between **Decimal Degrees (DD)** and **Degrees, Minutes, Seconds (DMS)** format across the application stack.
+   - Enhanced `GeodesicService.php` with high-precision methods: `toDms()`, `decimalToDms()`, `splitDms()`, and `dmsToDecimal()`.
+   - Updated `StoreProjectRequest.php` and `PerformCalculationRequest.php` with `prepareForValidation()` to automatically accept and normalize DMS string inputs (e.g. `12° 58' 17.76" N`, `77° 35' 40.43" E`, space-delimited, and colon-delimited coordinates) into WGS84 decimal degrees.
+   - Enhanced `ElevationController.php` to parse and resolve AMSL ground elevation queries for both DD and DMS coordinate inputs.
+
+2. **Frontend UI & Interactive Features**:
+   - Created dedicated coordinate utility `resources/js/utils/coordinates.js` with `decimalToDms`, `dmsToDecimal`, and `parseDmsString`.
+   - Updated `SiteInputForm.vue` with an interactive format mode toggle (**Decimal Degrees (DD)** vs. **Degrees, Minutes, Seconds (DMS)**).
+   - In DD mode: provides instant DMS live conversion badges below latitude and longitude inputs.
+   - In DMS mode: provides structured degree (°), minute ('), second ("), and direction (N/S, E/W) inputs plus a quick string parser for pasting external survey strings, with live Decimal Degrees equivalents.
+   - Enhanced `copyCoordinates()` to copy both DD and DMS formatted site strings simultaneously.
+   - Updated `MapComponent.vue` marker popups to display both DD and DMS coordinates.
+
+3. **PDF Customer Report Enhancements**:
+   - Updated `report.blade.php` to render both Decimal Degrees and formal DMS coordinates under Site Specifications.
+
+4. **Direct DMS Paste & Sanitization Fix**:
+   - Replaced restrictive HTML `<input type="number">` elements in `SiteInputForm.vue` with text inputs and custom `@paste` event interceptors.
+   - Fixed browser native number sanitization bug where pasting `19°12'48.20"N` stripped symbols (`°`, `'`, `"`, `N`) leaving `191248.20`.
+   - Added `parseCoordinateInput` and `parseCombinedCoordinates` to automatically parse DMS strings (`19°12'48.20"N`), compact coordinates (`191248.20`), and combined latitude/longitude pairs (`19°12'48.20"N, 77°35'40.43"E`) directly on paste or input, auto-converting to `19.21338889°`.
+   - Updated backend `GeodesicService.php` to handle compact coordinate strings seamlessly.
+
+5. **Engineer Custom Remarks in PDF Report Fix**:
+   - Fixed issue where custom survey remarks entered in `ResultsView.vue` were not passed to `/api/projects/{id}/pdf`.
+   - Updated `ResultsView.vue` to emit `export-pdf` with `customRemarks` and updated `triggerExportPdf`.
+   - Updated `app.js` to handle `@update-remarks` and bundle `user_custom_remarks` into the PDF generation payload.
+   - Updated `ReportController.php` to merge `user_custom_remarks` from request and persist it to the calculation record in database.
+   - Updated `report.blade.php` to check both `$calc['tech_payload']['user_custom_remarks']` and `$calc['user_custom_remarks']`, rendering under "Engineer Custom Remarks & Field Notes".
+   - Updated `EngineeringCalculationService.php` to include `user_custom_remarks` for both RF and FSO technologies.
+
+6. **Codebase Cleanup & Housekeeping**:
+   - Removed accidental duplicate directory `resources/resources` from git tracking.
+   - Validated that all mandatory configuration, database migrations, controllers, services, views, and test suites are intact and clean.
+
+7. **Empirical Verification & Zero Regression**:
+   - Unit Tests: `php artisan test` passed with 12/12 tests (38 assertions, 0 errors).
+   - Production Build: `npm run build` compiled 48 Vite modules cleanly.
+
+---
+
 ## Daily Log: 2026-08-17
 
 ### Timestamp: 2026-08-17 12:41:00 IST

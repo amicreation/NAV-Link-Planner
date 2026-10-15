@@ -279,11 +279,25 @@ const app = createApp({
             }
         },
 
-        async exportPdf() {
+        handleUpdateRemarks(remarks) {
+            this.fsoParams.user_custom_remarks = remarks;
+            if (this.calculationResults?.tech_payload) {
+                this.calculationResults.tech_payload.user_custom_remarks = remarks;
+            }
+            if (this.calculationResults) {
+                this.calculationResults.user_custom_remarks = remarks;
+            }
+        },
+
+        async exportPdf(remarksParam = null) {
             if (!this.activeProject) {
                 alert('Please create or load a project first to export PDF report.');
                 return;
             }
+
+            const userRemarks = (remarksParam !== null && remarksParam !== undefined)
+                ? remarksParam
+                : (this.calculationResults?.tech_payload?.user_custom_remarks || this.calculationResults?.user_custom_remarks || this.fsoParams.user_custom_remarks || '');
 
             let mapImageBase64 = null;
             let chartImageBase64 = null;
@@ -318,7 +332,8 @@ const app = createApp({
             const payload = {
                 map_image: mapImageBase64 || this.calculationResults?.map_image,
                 chart_image: chartImageBase64 || this.calculationResults?.chart_image,
-                additional_images: this.additionalImages
+                additional_images: this.additionalImages,
+                user_custom_remarks: userRemarks
             };
 
             try {
@@ -455,6 +470,7 @@ const app = createApp({
                                 :results="calculationResults" 
                                 :site-a="siteA"
                                 :site-b="siteB"
+                                @update-remarks="handleUpdateRemarks"
                                 @export-pdf="exportPdf" 
                             />
                         </div>

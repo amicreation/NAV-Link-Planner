@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\ElevationService;
+use App\Services\GeodesicService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -17,6 +18,17 @@ class ElevationController extends Controller
      */
     public function lookup(Request $request): JsonResponse
     {
+        $rawLat = $request->input('latitude');
+        $rawLon = $request->input('longitude');
+
+        $lat = GeodesicService::dmsToDecimal($rawLat, false);
+        $lon = GeodesicService::dmsToDecimal($rawLon, true);
+
+        $request->merge([
+            'latitude' => $lat,
+            'longitude' => $lon,
+        ]);
+
         $request->validate([
             'latitude' => 'required|numeric|between:-90,90',
             'longitude' => 'required|numeric|between:-180,180',

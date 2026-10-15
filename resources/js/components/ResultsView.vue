@@ -28,7 +28,7 @@
           >
             {{ (results.recommendation_status || 'UNVALUATED').toUpperCase() }}
           </span>
-          <button @click="$emit('export-pdf')" class="btn btn-primary fw-semibold d-flex align-items-center gap-2">
+          <button @click="triggerExportPdf" class="btn btn-primary fw-semibold d-flex align-items-center gap-2">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="7 10 12 15 17 10"/>
@@ -352,8 +352,9 @@ export default {
     results: {
       immediate: true,
       handler(val) {
-        if (val?.tech_payload?.user_custom_remarks) {
-          this.customRemarks = val.tech_payload.user_custom_remarks;
+        const remarks = val?.tech_payload?.user_custom_remarks || val?.user_custom_remarks;
+        if (remarks !== undefined && remarks !== null && remarks !== '') {
+          this.customRemarks = remarks;
         }
       }
     }
@@ -365,9 +366,23 @@ export default {
       return Number(val).toFixed(3);
     },
 
+    triggerExportPdf() {
+      if (this.results?.tech_payload) {
+        this.results.tech_payload.user_custom_remarks = this.customRemarks;
+      }
+      if (this.results) {
+        this.results.user_custom_remarks = this.customRemarks;
+      }
+      this.$emit('update-remarks', this.customRemarks);
+      this.$emit('export-pdf', this.customRemarks);
+    },
+
     onRemarksChange() {
       if (this.results?.tech_payload) {
         this.results.tech_payload.user_custom_remarks = this.customRemarks;
+      }
+      if (this.results) {
+        this.results.user_custom_remarks = this.customRemarks;
       }
       this.$emit('update-remarks', this.customRemarks);
     }

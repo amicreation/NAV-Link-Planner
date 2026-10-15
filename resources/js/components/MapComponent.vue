@@ -19,6 +19,7 @@
 
 <script>
 import L from 'leaflet';
+import { decimalToDms } from '../utils/coordinates.js';
 
 export default {
   props: {
@@ -114,6 +115,11 @@ export default {
       if (this.markerB) this.map.removeLayer(this.markerB);
       if (this.polyline) this.map.removeLayer(this.polyline);
 
+      const dmsA_lat = decimalToDms(latA, false).formatted;
+      const dmsA_lon = decimalToDms(lonA, true).formatted;
+      const dmsB_lat = decimalToDms(latB, false).formatted;
+      const dmsB_lon = decimalToDms(lonB, true).formatted;
+
       // Create Custom Canvas Circle Markers
       this.markerA = L.circleMarker([latA, lonA], {
         radius: 9,
@@ -122,7 +128,7 @@ export default {
         weight: 2,
         fillOpacity: 1
       }).addTo(this.map)
-        .bindPopup(`<b>Site A: ${this.siteA.name || 'Node A'}</b><br>Lat: ${latA.toFixed(8)}°<br>Lon: ${lonA.toFixed(8)}°<br>Tower Height: ${this.siteA.tower_height}m`);
+        .bindPopup(`<b>Site A: ${this.siteA.name || 'Node A'}</b><br>Lat: ${latA.toFixed(8)}° <span style="font-size:0.85em;color:#94a3b8;">(${dmsA_lat})</span><br>Lon: ${lonA.toFixed(8)}° <span style="font-size:0.85em;color:#94a3b8;">(${dmsA_lon})</span><br>Tower Height: ${this.siteA.tower_height}m`);
 
       this.markerB = L.circleMarker([latB, lonB], {
         radius: 9,
@@ -131,7 +137,7 @@ export default {
         weight: 2,
         fillOpacity: 1
       }).addTo(this.map)
-        .bindPopup(`<b>Site B: ${this.siteB.name || 'Node B'}</b><br>Lat: ${latB.toFixed(8)}°<br>Lon: ${lonB.toFixed(8)}°<br>Tower Height: ${this.siteB.tower_height}m`);
+        .bindPopup(`<b>Site B: ${this.siteB.name || 'Node B'}</b><br>Lat: ${latB.toFixed(8)}° <span style="font-size:0.85em;color:#94a3b8;">(${dmsB_lat})</span><br>Lon: ${lonB.toFixed(8)}° <span style="font-size:0.85em;color:#94a3b8;">(${dmsB_lon})</span><br>Tower Height: ${this.siteB.tower_height}m`);
 
       const latlngs = [[latA, lonA], [latB, lonB]];
       this.polyline = L.polyline(latlngs, { color: '#0284c7', weight: 4, opacity: 0.9, dashArray: '6, 6' }).addTo(this.map);
