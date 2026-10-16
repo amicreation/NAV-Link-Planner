@@ -151,18 +151,6 @@ npm run build
 
 ---
 
-## Default Login Credentials
-
-The application is pre-seeded with three accounts representing different permission tiers:
-
-| Role Profile | Email Address | Password | Permissions & Scope |
-|---|---|---|---|
-| **Full Admin** | `amitsharma@navwireless.com` | `admin` | Full system access: User Management, Audit Logs, Settings, Equipment Library, all RF & FSO calculation modes, and PDF Reports. |
-| **Full Technical** | `tech@navlinkplanner.com` | `password123` | Full engineering access: Advanced FSO Optical link budget parameters, RF Workbench, Equipment Library, and Reports. |
-| **Field Engineer** | `engineer@navlinkplanner.com` | `password123` | Field survey access: RF Workbench, FSO Line of Sight (LOS) Survey mode, Equipment Library, and Reports. |
-
----
-
 ## How to Run & Operate the Application
 
 To run NAV LINK PLANNER locally, you will start the Laravel backend and (optionally) the Vite dev server for hot-reload during development.
