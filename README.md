@@ -41,10 +41,7 @@
    - Responsive Leaflet.js map with OpenStreetMap tiles, real-time antenna marker placement, geodesic path line, and coordinate inspection.
 5. **Customer-Ready PDF Reports**:
    - Generates high-resolution branded engineering PDF reports via DomPDF with PHP GD high-dpi graphics (bypassing SVG flip bugs) and persistent engineer custom field remarks.
-6. **Multi-Tier Role-Based Access Control**:
-   - Three distinct user profiles: **Full Admin**, **Full Technical**, and **Field Engineer**.
-
----
+ 
 
 ## System Requirements
 
