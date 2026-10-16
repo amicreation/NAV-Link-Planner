@@ -210,9 +210,6 @@ graph TD
 
 ### 1. Authentication
 1. Open `http://127.0.0.1:8000` in your web browser.
-2. Sign in using any of the credentials listed in the [Default Login Credentials](#default-login-credentials) section.
-3. The top navigation bar displays your active role badge (`FULL ADMIN`, `FULL TECHNICAL`, or `ENGINEERING`).
-
 ### 2. Creating a Link Planning Project
 1. In the sidebar or workbench, click **New Project**.
 2. Enter the **Project Name**, **Customer Name**, **Engineer Name**, and select the primary technology (**RF** or **FSO**).
